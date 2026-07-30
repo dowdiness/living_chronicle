@@ -19,8 +19,12 @@ repository = ""
 
 license = "Apache-2.0"
 
-keywords = []
+keywords = [ ]
 
 preferred_target = "wasm-gc"
 
 description = ""
+
+import {
+  "dowdiness/event-graph-walker@0.6.0",
+}
