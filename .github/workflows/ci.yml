@@ -26,10 +26,16 @@ jobs:
         run: moon test --target all
 
       - name: Exercise Phase 0 restore gates on JS
-        run: moon bench --release --target js benchmarks/phase0 --no-parallelize
+        run: >-
+          moon bench --release --target js
+          -p dowdiness/living_chronicle/benchmarks/phase0
+          -f egw_probe_benchmark.mbt --no-parallelize
 
       - name: Exercise Phase 0 restore gates on wasm-gc
-        run: moon bench --release --target wasm-gc benchmarks/phase0 --no-parallelize
+        run: >-
+          moon bench --release --target wasm-gc
+          -p dowdiness/living_chronicle/benchmarks/phase0
+          -f egw_probe_benchmark.mbt --no-parallelize
 
       - name: Verify formatting
         run: |

@@ -74,11 +74,13 @@ These gates classify this machine-level integration experiment only:
 Passing these gates does not establish a browser p95 or justify increasing the
 active-document cap beyond 10,000 operations.
 
-Normal CI executes both benchmark targets. That continuously enforces fixture
-semantics, exact mixed operation counts, the deterministic 8 MiB checkpoint
-cap, and benchmark executability. CI does not compare wall-clock values against
-the local timing gates because shared-runner timing is not a stable regression
-signal; dated controlled runs own those measurements.
+Normal CI executes `egw_probe_benchmark.mbt` on both benchmark targets. That
+continuously enforces the baseline fixture semantics, exact mixed operation
+counts, the deterministic 8 MiB checkpoint cap, and benchmark executability.
+Detailed component investigations remain manual so they do not add several
+minutes to every change. CI does not compare wall-clock values against the local
+timing gates because shared-runner timing is not a stable regression signal;
+dated controlled runs own those measurements.
 
 ## Commands
 

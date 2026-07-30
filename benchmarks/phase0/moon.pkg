@@ -1,4 +1,5 @@
 import {
   "dowdiness/event-graph-walker/container",
   "moonbitlang/core/bench",
+  "moonbitlang/core/encoding/utf8",
 }
