@@ -65,7 +65,8 @@ prebuilt 10k document への 1 public operation は JS で `insert_text` 2.41 ms
 
 | issue | 本計画での解釈 |
 |---|---|
-| [#73 superlinear insertion](https://github.com/dowdiness/event-graph-walker/issues/73) | Phase 0 blocker。text-heavy incident を避け、測定する。 |
+| [#73 superlinear insertion](https://github.com/dowdiness/event-graph-walker/issues/73) | 現行v0.6.0でもlocal sequential text/tree生成のsuperlinear growthを再現。ただし単発10k-state appendはJS約2.5msで、restoreとは別経路。 |
+| [#98 container property replay](https://github.com/dowdiness/event-graph-walker/issues/98) | grouped/interleaved同一10k-op applyでJS 0.41s対12.64s、wasm-gc 0.35s対8.06s。`reapply_properties`相互作用を独立したupstream issueとして追跡する。 |
 | [#72 application adapter boundary](https://github.com/dowdiness/event-graph-walker/issues/72) | Living Chronicle は typed-spreadsheet に続く第2 driver。adapter-local receipt/impact の実測材料を提供する。 |
 | [#51 RLE properties](https://github.com/dowdiness/event-graph-walker/issues/51) | hardening。 |
 | [#49 TreeState properties](https://github.com/dowdiness/event-graph-walker/issues/49) | move/delete を使う本ゲームには重要。 |
@@ -100,8 +101,8 @@ prebuilt 10k document への 1 public operation は JS で `insert_text` 2.41 ms
 4. **transaction 誤解**: `Document::transaction` は undo grouping で rollback transaction ではない。
 5. **true compaction 不在**: external journal は checkpoint 後に削除できるが、`export_all` 内の EGW history/tombstone を縮める public compaction はない。
 6. **hard deletion 不可**: redacted text は CRDT history に残る。secret/PII を replicated CRDT に保存しない。法的消去は fresh document rematerialization と old blob destruction が必要。
-7. **performance gate**: 10k sequential text/tree growth はそのまま大規模 IncidentDocument に採用できない。
-8. **restore identity test**: full JSON を同じ replica ID の新しい `Document` へ apply し、その後の local sequence が安全に継続することを application-level test で固定する必要がある。
+7. **performance constraint**: 10k mixed local restoreは通過したが、同じ10kでもinterleaved property replayはJS 12.64s。operation/byte capだけに依存せず、Phase 1のadmission/rotation boundaryで500-contribution capも独立に強制する。
+Phase 0で、元instanceをretireした後のsame-ReplicaId restore、continuation delta、Unicode、duplicate/permutation、receiver limitsをapplication-level black-box testとして固定済み。
 
 ### P1: pilot 前
 
@@ -469,7 +470,7 @@ loading は skeleton + cached content、empty は次の一人用 task、error �
 
 | phase | purpose / implementation | completion, tests, benchmark | risk / go gate |
 |---|---|---|---|
-| 0 Upstream gate | v0.6.0 pin、full JSON restore/continue、duplicate/permutation、JS+wasm baselines、issue triage | 811 tests + app probes、1k/10k mixed workload | same-replica restore と operation budget が通らなければ停止 |
+| 0 Upstream gate | v0.6.0 pin、full JSON restore/continue、duplicate/permutation、Unicode、JS+wasm baselines、issue triage | app probes、1k/10k mixed restore、decode/apply/property分離、CI。mixed 10kはPASSだがproperty-heavy 10kはFAIL | restart-only replica契約と500-contribution/10k-op/8MiBの暫定admission policyを設計入力として固定し、property replayを上流分離する |
 | 1 In-page replicas | IDs、closure-free commands、Incident codec、2–3 DocumentHandle harness、single projection path | offline permutation convergence、history UI | `transaction` を rollback と誤用しない |
 | 2 Durable local | memory adapter→IndexedDB、intent journal、checkpoint、replay、migration v1 | reload/crash injection/checksum/replay hash | data loss/corrupt restore があれば停止 |
 | 3 Cross-tab | BroadcastChannel provider、lease/clone detection、tab subscription | duplicate/delay/drop/tab close tests | same ReplicaId fork を防げること |
@@ -525,18 +526,20 @@ loading は skeleton + cached content、empty は次の一人用 task、error �
 
 | stage | topology / document budget |
 |---|---|
-| MVP | 10 concurrent total、3 incidents、active incident ≤500 contributions / ≤20k EGW ops **かつ serialized full checkpoint が product byte cap 未満** |
+| MVP | 10 concurrent total、3 incidents、active incident **≤500 contributionsかつ≤10k EGW opsかつ≤8 MiB**。Phase 1以降のadmission/rotation boundaryで3条件を独立に強制し、browser evidence が悪ければさらに下げる |
 | pilot | 100 connected total、10 incidents、per incident realtime ≤20、≤50k ops |
 | growth | 500 connected total、50+ subscribed docs、per-doc fan-out ≤50。500-peer single room はしない |
 | world history | 1M ops across many active/cold docs。client は必要 docs のみ load |
 | offline | 3日 offline、5k operation delta。大きければ full checkpoint sync |
 
+Phase 0のsequential local measurementでは、mixed 10k restoreは4,230,684 bytes、JS 1.78 s、wasm-gc 1.20 sだった。一方、同一projection・同一10k tree operationsのproperty replay分離では、grouped applyがJS 406.92ms / wasm-gc 354.13ms、interleaved applyがJS 12.64s / wasm-gc 8.06sだった。operation countだけではrestore costを予測できない。詳細は[`docs/performance/2026-07-30-phase0-egw-restore-baseline.md`](../performance/2026-07-30-phase0-egw-restore-baseline.md)と[`docs/performance/2026-07-30-egw-restore-breakdown.md`](../performance/2026-07-30-egw-restore-breakdown.md)。
+
 ### candidate SLO（Phase 0/9 で実測後に確定）
 
 - local contribution plan+apply p95 < 50 ms on JS target
-- remote 100-op batch apply p95 < 100 ms at 20k-op incident
+- remote 100-op batch apply p95 < 100 ms at MVP-capped incident
 - warm incident switch p75 < 500 ms、cold p75 < 2 s
-- 20k-op restore p95 < 2 s
+- ≤500 contributionsかつbounded textのfull browser restore p95 < 2 s
 - 5k-op reconnect sync p95 < 2 s（network除外/込みを分離）
 - active client memory < 100 MiB mobile class
 - relay queue per `(connection,doc)` bounded、overflow は resync

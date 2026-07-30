@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  moonbit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Reject unreviewed MoonBit toolchain drift
+        run: |
+          versions="$(moon version --all)"
+          printf '%s\n' "$versions"
+          grep -Fq 'moon 0.1.20260724 (5f1406a 2026-07-24)' <<<"$versions"
+          grep -Fq 'moonc v0.10.5+5e7afb0c0 (2026-07-27)' <<<"$versions"
+          grep -Fq 'moonrun 0.1.20260724 (5f1406a 2026-07-24)' <<<"$versions"
+
+      - name: Update MoonBit dependencies
+        run: moon update
+
+      - name: Check all targets
+        run: moon check --target all --deny-warn
+
+      - name: Test all targets
+        run: moon test --target all
+
+      - name: Exercise Phase 0 restore gates on JS
+        run: >-
+          moon bench --release --target js
+          -p dowdiness/living_chronicle/benchmarks/phase0
+          -f egw_probe_benchmark.mbt --no-parallelize
+
+      - name: Exercise Phase 0 restore gates on wasm-gc
+        run: >-
+          moon bench --release --target wasm-gc
+          -p dowdiness/living_chronicle/benchmarks/phase0
+          -f egw_probe_benchmark.mbt --no-parallelize
+
+      - name: Verify formatting
+        run: |
+          moon fmt
+          git diff --exit-code
+
+      - name: Verify generated interfaces
+        run: |
+          moon info
+          git diff --exit-code

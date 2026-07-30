@@ -1,0 +1,4 @@
+import {
+  "dowdiness/event-graph-walker/container",
+  "dowdiness/event-graph-walker/sync",
+} for "test"
