@@ -54,10 +54,14 @@ SLOs.
 | 1,000 mixed operations | 412,940 | 52.95 ms ± 2.10 ms | 38.16 ms ± 2.54 ms |
 | 10,000 mixed operations | 4,230,684 | 1.78 s ± 146.92 ms | 1.20 s ± 27.08 ms |
 
-The 10,000-operation local restore gate passes, but 1k-to-10k restore growth is
-materially superlinear. The initial active IncidentDocument budget is therefore
-10,000 operations and 8 MiB, whichever comes first; browser evidence may lower
-that cap.
+The mixed 10,000-operation local restore gate passes, but workload composition
+matters. A matched
+[property-replay breakdown](docs/performance/2026-07-30-egw-restore-breakdown.md)
+measured 10k interleaved create/property apply at 12.64 s on JS and 8.06 s on
+wasm-gc, versus 406.92 ms and 354.13 ms when the same operations were grouped.
+The initial active IncidentDocument budget therefore applies all three limits:
+500 contributions, 10,000 total operations, and 8 MiB; browser evidence may
+lower them further.
 
 Replica-ID reuse is a restart-only restore workflow. Two concurrently live
 replica instances must never share an ID; cloned profiles require a new replica

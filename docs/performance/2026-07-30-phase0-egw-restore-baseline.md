@@ -126,14 +126,17 @@ wasm-gc.
 | Observed max below 3 s | PASS — JS 2.15 s, wasm-gc 1.23 s |
 | Variation below 20% | PASS |
 
-**Phase 0 local restore gate: PASS, with a scaling warning.**
+**Phase 0 mixed-workload restore gate: PASS, with a composition warning.**
 
 A 10x increase from mixed-1k to mixed-10k increased mean restore time by about
-33.6x on JS and 31.4x on wasm-gc. The absolute local gate passes, but the growth
-is materially superlinear and agrees with upstream performance concerns. The
-initial active IncidentDocument budget is therefore capped at 10,000 operations
-and 8 MiB, whichever comes first. Rotation should happen earlier when device
-measurements or projection work consume the remaining latency budget.
+33.6x on JS and 31.4x on wasm-gc. A subsequent matched breakdown found that the
+same 10k tree-operation count takes JS 406.92 ms when properties are grouped but
+12.64 s when creates and properties are interleaved. See
+[`2026-07-30-egw-restore-breakdown.md`](2026-07-30-egw-restore-breakdown.md).
+The initial active IncidentDocument budget therefore independently enforces
+500 contributions, 10,000 total operations, and 8 MiB. Rotation should happen
+earlier when device measurements or projection work consume the remaining
+latency budget.
 
 ## Raw output
 
@@ -176,5 +179,5 @@ phase0 restore mixed 10k operations
 - Measure full browser load, IndexedDB read, projection, and first render before
   defining a user-visible p95.
 - Add 5k and 10k active-document checkpoints to browser/device tests.
-- Revisit the 10,000-operation cap only after upstream superlinear insertion
-  work and application-level browser evidence improve it.
+- Revisit the contribution and operation caps only after the upstream property
+  replay path and application-level browser evidence improve them.
