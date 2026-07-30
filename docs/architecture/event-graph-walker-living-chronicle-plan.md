@@ -101,7 +101,7 @@ prebuilt 10k document への 1 public operation は JS で `insert_text` 2.41 ms
 4. **transaction 誤解**: `Document::transaction` は undo grouping で rollback transaction ではない。
 5. **true compaction 不在**: external journal は checkpoint 後に削除できるが、`export_all` 内の EGW history/tombstone を縮める public compaction はない。
 6. **hard deletion 不可**: redacted text は CRDT history に残る。secret/PII を replicated CRDT に保存しない。法的消去は fresh document rematerialization と old blob destruction が必要。
-7. **performance constraint**: 10k mixed local restoreは通過したが、同じ10kでもinterleaved property replayはJS 12.64s。operation/byte capだけに依存せず、500-contribution capも独立に強制する。
+7. **performance constraint**: 10k mixed local restoreは通過したが、同じ10kでもinterleaved property replayはJS 12.64s。operation/byte capだけに依存せず、Phase 1のadmission/rotation boundaryで500-contribution capも独立に強制する。
 Phase 0で、元instanceをretireした後のsame-ReplicaId restore、continuation delta、Unicode、duplicate/permutation、receiver limitsをapplication-level black-box testとして固定済み。
 
 ### P1: pilot 前
@@ -470,7 +470,7 @@ loading は skeleton + cached content、empty は次の一人用 task、error �
 
 | phase | purpose / implementation | completion, tests, benchmark | risk / go gate |
 |---|---|---|---|
-| 0 Upstream gate | v0.6.0 pin、full JSON restore/continue、duplicate/permutation、Unicode、JS+wasm baselines、issue triage | app probes、1k/10k mixed restore、decode/apply/property分離、CI。mixed 10kはPASSだがproperty-heavy 10kはFAIL | restart-only replica契約と500-contribution/10k-op/8MiBの複合budgetを固定し、property replayを上流分離する |
+| 0 Upstream gate | v0.6.0 pin、full JSON restore/continue、duplicate/permutation、Unicode、JS+wasm baselines、issue triage | app probes、1k/10k mixed restore、decode/apply/property分離、CI。mixed 10kはPASSだがproperty-heavy 10kはFAIL | restart-only replica契約と500-contribution/10k-op/8MiBの暫定admission policyを設計入力として固定し、property replayを上流分離する |
 | 1 In-page replicas | IDs、closure-free commands、Incident codec、2–3 DocumentHandle harness、single projection path | offline permutation convergence、history UI | `transaction` を rollback と誤用しない |
 | 2 Durable local | memory adapter→IndexedDB、intent journal、checkpoint、replay、migration v1 | reload/crash injection/checksum/replay hash | data loss/corrupt restore があれば停止 |
 | 3 Cross-tab | BroadcastChannel provider、lease/clone detection、tab subscription | duplicate/delay/drop/tab close tests | same ReplicaId fork を防げること |
@@ -526,7 +526,7 @@ loading は skeleton + cached content、empty は次の一人用 task、error �
 
 | stage | topology / document budget |
 |---|---|
-| MVP | 10 concurrent total、3 incidents、active incident **≤500 contributionsかつ≤10k EGW opsかつ≤8 MiB**。3条件を独立に強制し、browser evidence が悪ければさらに下げる |
+| MVP | 10 concurrent total、3 incidents、active incident **≤500 contributionsかつ≤10k EGW opsかつ≤8 MiB**。Phase 1以降のadmission/rotation boundaryで3条件を独立に強制し、browser evidence が悪ければさらに下げる |
 | pilot | 100 connected total、10 incidents、per incident realtime ≤20、≤50k ops |
 | growth | 500 connected total、50+ subscribed docs、per-doc fan-out ≤50。500-peer single room はしない |
 | world history | 1M ops across many active/cold docs。client は必要 docs のみ load |

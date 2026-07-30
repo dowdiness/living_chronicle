@@ -63,7 +63,10 @@ Before timing, every fixture is restored and checked for:
 Grouped and interleaved JSON sizes differ by about 4.4% at 10k because causal
 identities and dependencies reflect their different operation order. The apply
 comparison uses predecoded `SyncMessage` values, so JSON parsing and byte length
-are excluded from that timing.
+are excluded from that timing. This matrix is diagnostic evidence: the 10k
+ranges are non-overlapping, but any optimization acceptance decision must use
+at least five independent paired invocations per target rather than the noisier
+1k/5k cells from this single invocation.
 
 ## Timed boundaries
 
@@ -195,7 +198,8 @@ Current v0.6.0 local-growth measurements and the scope split are recorded on
 ## Product implication
 
 A total-operation cap alone does not predict restore cost. Until the property
-replay path is fixed, Living Chronicle must retain a separate contribution cap.
-The current 500-contribution MVP cap is consistent with the approximately 1k
-interleaved fixture; 10k property-interleaved operations are not an acceptable
-restore workload despite remaining below the byte cap.
+replay path is fixed, the planned Living Chronicle admission boundary must
+retain a separate contribution cap. The provisional 500-contribution MVP cap
+is consistent with the approximately 1k interleaved fixture; 10k
+property-interleaved operations are not an acceptable restore workload despite
+remaining below the byte cap.

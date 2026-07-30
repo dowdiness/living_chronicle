@@ -1,6 +1,7 @@
 ///|
 priv struct RestoreFixture {
   encoded : String
+  checkpoint_bytes : Int
   incident : @container.TreeNodeId
   contribution_count : Int
   text_codepoints : Int
@@ -31,8 +32,10 @@ fn restore_fixture(
   for index in 0..<text_codepoints {
     try! source.insert_text(incident, index, "x")
   }
+  let encoded = (try! source.sync().export_all()).to_json_string()
   {
-    encoded: (try! source.sync().export_all()).to_json_string(),
+    encoded,
+    checkpoint_bytes: @utf8.encode(encoded).length(),
     incident,
     contribution_count,
     text_codepoints,
@@ -81,7 +84,7 @@ fn verify_restore_fixture(
 ///|
 fn print_fixture_metadata(label : String, fixture : RestoreFixture) -> Unit {
   println(
-    "\{label}: checkpoint_bytes=\{fixture.encoded.length()} " +
+    "\{label}: checkpoint_bytes=\{fixture.checkpoint_bytes} " +
     "tree_ops=\{fixture.expected_tree_operations} " +
     "text_ops=\{fixture.expected_text_operations}",
   )
@@ -101,7 +104,7 @@ fn bench_restore(
     let report = try! receiver.sync().apply(message)
     b.keep(
       (
-        fixture.encoded.length(),
+        fixture.checkpoint_bytes,
         report.applied_tree_operations(),
         report.applied_text_operations(),
       ),
@@ -140,6 +143,6 @@ test "phase0 restore mixed 10k operations" (b : @bench.T) {
     fixture.expected_tree_operations + fixture.expected_text_operations,
     10_000,
   )
-  assert_true(fixture.encoded.length() <= 8 * 1024 * 1024)
+  assert_true(fixture.checkpoint_bytes <= 8 * 1024 * 1024)
   bench_restore(b, "mixed-10k", fixture)
 }

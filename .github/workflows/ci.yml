@@ -21,10 +21,16 @@ jobs:
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
-      - name: Update MoonBit dependencies
+      - name: Reject unreviewed MoonBit toolchain drift
         run: |
-          moon version --all
-          moon update
+          versions="$(moon version --all)"
+          printf '%s\n' "$versions"
+          grep -Fq 'moon 0.1.20260724 (5f1406a 2026-07-24)' <<<"$versions"
+          grep -Fq 'moonc v0.10.5+5e7afb0c0 (2026-07-27)' <<<"$versions"
+          grep -Fq 'moonrun 0.1.20260724 (5f1406a 2026-07-24)' <<<"$versions"
+
+      - name: Update MoonBit dependencies
+        run: moon update
 
       - name: Check all targets
         run: moon check --target all --deny-warn

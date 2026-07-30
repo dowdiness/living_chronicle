@@ -133,10 +133,11 @@ A 10x increase from mixed-1k to mixed-10k increased mean restore time by about
 same 10k tree-operation count takes JS 406.92 ms when properties are grouped but
 12.64 s when creates and properties are interleaved. See
 [`2026-07-30-egw-restore-breakdown.md`](2026-07-30-egw-restore-breakdown.md).
-The initial active IncidentDocument budget therefore independently enforces
-500 contributions, 10,000 total operations, and 8 MiB. Rotation should happen
-earlier when device measurements or projection work consume the remaining
-latency budget.
+The Phase 0 evidence therefore defines a provisional admission policy of 500
+contributions, 10,000 total operations, and 8 MiB. Phase 1 must enforce these
+three limits independently at the admission/rotation boundary. Rotation should
+happen earlier when device measurements or projection work consume the
+remaining latency budget.
 
 ## Raw output
 

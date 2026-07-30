@@ -32,6 +32,12 @@ moon fmt
 moon info
 ```
 
+CI intentionally follows the current stable MoonBit installer but rejects
+unreviewed toolchain drift against its recorded version strings. Dated
+performance reports remain the source of truth for their exact measured
+Moon/moonc versions; CI is a compatibility gate, not a timing reproduction
+host.
+
 Run the release-mode restore probes:
 
 ```bash
@@ -59,9 +65,10 @@ matters. A matched
 [property-replay breakdown](docs/performance/2026-07-30-egw-restore-breakdown.md)
 measured 10k interleaved create/property apply at 12.64 s on JS and 8.06 s on
 wasm-gc, versus 406.92 ms and 354.13 ms when the same operations were grouped.
-The initial active IncidentDocument budget therefore applies all three limits:
-500 contributions, 10,000 total operations, and 8 MiB; browser evidence may
-lower them further.
+The provisional IncidentDocument admission policy therefore defines all three
+limits: 500 contributions, 10,000 total operations, and 8 MiB. Phase 1 must
+enforce them at the admission/rotation boundary; browser evidence may lower
+them further.
 
 Replica-ID reuse is a restart-only restore workflow. Two concurrently live
 replica instances must never share an ID; cloned profiles require a new replica
