@@ -1,0 +1,7 @@
+// import {
+//   "dowdiness/living_chronicle" @lib,
+// }
+
+options(
+  "is-main": true,
+)
