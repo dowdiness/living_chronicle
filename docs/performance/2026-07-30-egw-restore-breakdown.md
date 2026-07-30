@@ -176,7 +176,7 @@ This is distinct from Issue #73, which tracks local `insert_text` and
 
 **A separate upstream issue is warranted.** Proposed title:
 
-> `perf(container): avoid quadratic property replay during full-sync tree apply`
+> [`#98 perf(container): isolate quadratic property replay during full-sync tree apply`](https://github.com/dowdiness/event-graph-walker/issues/98)
 
 Recommended scope:
 
@@ -187,8 +187,10 @@ Recommended scope:
 4. prototype only after the private counter confirms attribution;
 5. compare JS and wasm-gc and retain convergence/failure-atomicity gates.
 
-No issue has been created. Publication requires explicit approval for the
-`dowdiness/event-graph-walker` repository and action.
+The upstream investigation is tracked in
+[`dowdiness/event-graph-walker#98`](https://github.com/dowdiness/event-graph-walker/issues/98).
+Current v0.6.0 local-growth measurements and the scope split are recorded on
+[Issue #73](https://github.com/dowdiness/event-graph-walker/issues/73#issuecomment-5131576474).
 
 ## Product implication
 

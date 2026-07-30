@@ -66,7 +66,7 @@ prebuilt 10k document への 1 public operation は JS で `insert_text` 2.41 ms
 | issue | 本計画での解釈 |
 |---|---|
 | [#73 superlinear insertion](https://github.com/dowdiness/event-graph-walker/issues/73) | 現行v0.6.0でもlocal sequential text/tree生成のsuperlinear growthを再現。ただし単発10k-state appendはJS約2.5msで、restoreとは別経路。 |
-| unfiled: container property replay | grouped/interleaved同一10k-op applyでJS 0.41s対12.64s、wasm-gc 0.35s対8.06s。`reapply_properties`相互作用を別upstream issue候補とする。 |
+| [#98 container property replay](https://github.com/dowdiness/event-graph-walker/issues/98) | grouped/interleaved同一10k-op applyでJS 0.41s対12.64s、wasm-gc 0.35s対8.06s。`reapply_properties`相互作用を独立したupstream issueとして追跡する。 |
 | [#72 application adapter boundary](https://github.com/dowdiness/event-graph-walker/issues/72) | Living Chronicle は typed-spreadsheet に続く第2 driver。adapter-local receipt/impact の実測材料を提供する。 |
 | [#51 RLE properties](https://github.com/dowdiness/event-graph-walker/issues/51) | hardening。 |
 | [#49 TreeState properties](https://github.com/dowdiness/event-graph-walker/issues/49) | move/delete を使う本ゲームには重要。 |
