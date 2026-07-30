@@ -25,6 +25,12 @@ jobs:
       - name: Test all targets
         run: moon test --target all
 
+      - name: Exercise Phase 0 restore gates on JS
+        run: moon bench --release --target js benchmarks/phase0 --no-parallelize
+
+      - name: Exercise Phase 0 restore gates on wasm-gc
+        run: moon bench --release --target wasm-gc benchmarks/phase0 --no-parallelize
+
       - name: Verify formatting
         run: |
           moon fmt

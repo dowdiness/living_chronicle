@@ -123,12 +123,23 @@ test "phase0 restore 1k block-text codepoints" (b : @bench.T) {
 /// 1,000 total operations: one incident create, 250 contribution creates,
 /// 250 body properties, and 499 block-text insert operations.
 test "phase0 restore mixed 1k operations" (b : @bench.T) {
-  bench_restore(b, "mixed-1k", restore_fixture("mixed-1k", 250, 499))
+  let fixture = restore_fixture("mixed-1k", 250, 499)
+  assert_eq(
+    fixture.expected_tree_operations + fixture.expected_text_operations,
+    1_000,
+  )
+  bench_restore(b, "mixed-1k", fixture)
 }
 
 ///|
 /// 10,000 total operations: one incident create, 2,500 contribution creates,
 /// 2,500 body properties, and 4,999 block-text insert operations.
 test "phase0 restore mixed 10k operations" (b : @bench.T) {
-  bench_restore(b, "mixed-10k", restore_fixture("mixed-10k", 2_500, 4_999))
+  let fixture = restore_fixture("mixed-10k", 2_500, 4_999)
+  assert_eq(
+    fixture.expected_tree_operations + fixture.expected_text_operations,
+    10_000,
+  )
+  assert_true(fixture.encoded.length() <= 8 * 1024 * 1024)
+  bench_restore(b, "mixed-10k", fixture)
 }

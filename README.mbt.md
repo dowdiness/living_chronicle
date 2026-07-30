@@ -20,6 +20,7 @@ Current probes establish that:
   replacement's continuation delta and converge;
 - exact duplicate delivery is idempotent and reported as duplicate operations;
 - concurrent contribution appends converge under opposite delivery orders;
+- non-BMP Unicode survives full restore and continuation-delta sync;
 - decoded-operation and encoded-byte limits reject oversized input atomically.
 
 Run the verification suite from the repository root:
@@ -40,17 +41,23 @@ moon bench --release --target wasm-gc benchmarks/phase0 --no-parallelize
 
 ### Initial local benchmark evidence
 
-Environment: Moon `0.1.20260713`, moonc `v0.10.4+2cc641edf`. These are
-single-machine directional baselines, not product SLOs.
+The reproducible environment, method, raw output, checkpoint sizes, and gates
+are recorded in
+[`docs/performance/2026-07-30-phase0-egw-restore-baseline.md`](docs/performance/2026-07-30-phase0-egw-restore-baseline.md).
+These are single-machine core decode/apply measurements, not browser or product
+SLOs.
 
-| Restore workload | JS mean ± σ | wasm-gc mean ± σ |
-|---|---:|---:|
-| 1,000 immutable property contributions (2,001 tree operations) | 630.24 ms ± 164.60 ms | 332.98 ms ± 26.58 ms |
-| 1,000 block-text codepoints | 96.36 ms ± 23.58 ms | 86.27 ms ± 13.47 ms |
+| Restore workload | JSON bytes | JS mean ± σ | wasm-gc mean ± σ |
+|---|---:|---:|---:|
+| 1,000 immutable property contributions (2,001 tree operations) | 760,715 | 264.41 ms ± 10.33 ms | 178.86 ms ± 6.37 ms |
+| 1,000 block-text codepoints | 455,763 | 40.03 ms ± 2.62 ms | 33.05 ms ± 1.43 ms |
+| 1,000 mixed operations | 412,940 | 52.95 ms ± 2.10 ms | 38.16 ms ± 2.54 ms |
+| 10,000 mixed operations | 4,230,684 | 1.78 s ± 146.92 ms | 1.20 s ± 27.08 ms |
 
-The property workload intentionally creates one node and one atomic body
-property per contribution. The result supports bounded IncidentDocuments and
-document rotation rather than a world-sized CRDT document.
+The 10,000-operation local restore gate passes, but 1k-to-10k restore growth is
+materially superlinear. The initial active IncidentDocument budget is therefore
+10,000 operations and 8 MiB, whichever comes first; browser evidence may lower
+that cap.
 
 Replica-ID reuse is a restart-only restore workflow. Two concurrently live
 replica instances must never share an ID; cloned profiles require a new replica
